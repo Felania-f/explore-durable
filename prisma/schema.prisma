@@ -1,25 +1,128 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/app/generated/prisma"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+model Utilisateur {
+  id_utilisateur    Int      @id @default(autoincrement())
+  nom               String
+  prenom            String
+  mail              String   @unique
+  mot_de_passe      String
+  date_de_naissance DateTime
+  tel               String
+
+  commentaires Commentaire[]
+  destinations fait_par[]
+  coche_items  cocher[]
 }
 
-model Post {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean @default(false)
-  authorId  Int
-  author    User    @relation(fields: [authorId], references: [id])
+model Destination {
+  id_destination Int    @id @default(autoincrement())
+  pays           String
+  region         String
+  description    String
+  avis_global    Float
+  image1         String
+  image2         String
+  image3         String
+
+  commentaires    Commentaire[]
+  activites       Activite[]
+  utilisateurs    fait_par[]
+  checklist_items contient[]
+  formalites      requiert[]
+}
+
+model Commentaire {
+  id_commentaire    Int      @id @default(autoincrement())
+  note              Int
+  contenu           String
+  date_commentaire  DateTime
+  image_commentaire String?
+
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id_utilisateur])
+  destination   Destination @relation(fields: [destinationId], references: [id_destination])
+  utilisateurId Int
+  destinationId Int
+}
+
+model Activite {
+  id_activite          Int     @id @default(autoincrement())
+  nom_activite         String
+  description_activite String
+  image_activite       String?
+
+  destination   Destination @relation(fields: [destinationId], references: [id_destination])
+  destinationId Int
+}
+
+model Contact {
+  id_contact  Int      @id @default(autoincrement())
+  nom         String
+  prenom      String
+  mail        String
+  message     String
+  date_envoie DateTime
+}
+
+model CheckListe_Item {
+  id_checkliste_item Int    @id @default(autoincrement())
+  nom_item           String
+
+  destinations       contient[]
+  coche_utilisateurs cocher[]
+}
+
+model Formalite_administrative_Item {
+  id_formalite_administrative_item Int    @id @default(autoincrement())
+  descripition_formalite           String
+
+  destinations requiert[]
+}
+
+model fait_par {
+  utilisateurId Int
+  destinationId Int
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id_utilisateur])
+  destination Destination @relation(fields: [destinationId], references: [id_destination])
+
+  @@id([utilisateurId, destinationId])
+}
+
+model contient {
+  destinationId   Int
+  checklistItemId Int
+
+  destination    Destination     @relation(fields: [destinationId], references: [id_destination])
+  checklist_item CheckListe_Item @relation(fields: [checklistItemId], references: [id_checkliste_item])
+
+  @@id([destinationId, checklistItemId])
+}
+
+model requiert {
+  destinationId   Int
+  formaliteItemId Int
+
+  destination Destination                   @relation(fields: [destinationId], references: [id_destination])
+  formalite   Formalite_administrative_Item @relation(fields: [formaliteItemId], references: [id_formalite_administrative_item])
+
+  @@id([destinationId, formaliteItemId])
+}
+
+model cocher {
+  utilisateurId   Int
+  checklistItemId Int
+  date_cocher     DateTime
+
+  utilisateur    Utilisateur     @relation(fields: [utilisateurId], references: [id_utilisateur])
+  checklist_item CheckListe_Item @relation(fields: [checklistItemId], references: [id_checkliste_item])
+
+  @@id([utilisateurId, checklistItemId])
 }
